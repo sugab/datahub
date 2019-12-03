@@ -220,6 +220,43 @@ func (h *Hub) Gets(data orm.DataModel, parm *dbflex.QueryParam, dest interface{}
 	return nil
 }
 
+func (h *Hub) Aggregate(data orm.DataModel, parm *dbflex.QueryParam, dest interface{}) error {
+	idx, conn, err := h.getConn()
+	if err != nil {
+		return fmt.Errorf("connection error. %s", err.Error())
+	}
+	defer h.closeConn(idx, conn)
+
+	qry := dbflex.From(data.TableName())
+	if w := parm.Where; w != nil {
+		qry.Where(w)
+	}
+	if o := parm.Sort; len(o) > 0 {
+		qry.OrderBy(o...)
+	}
+	if o := parm.Skip; o > 0 {
+		qry.Skip(o)
+	}
+	if o := parm.Take; o > 0 {
+		qry.Take(o)
+	}
+	if o := parm.GroupBy; len(o) > 0 {
+		qry.GroupBy(o...)
+	}
+	if o := parm.Aggregates; len(o) > 0 {
+		qry.Aggr(o...)
+	}
+
+	cur := conn.Cursor(qry, nil)
+	if err = cur.Error(); err != nil {
+		return fmt.Errorf("error when running cursor for aggregation. %s", err.Error())
+	}
+	defer cur.Close()
+
+	err = cur.Fetchs(dest, 0)
+	return err
+}
+
 func (h *Hub) Close() {
 	if h.usePool {
 		h.pool.Close()

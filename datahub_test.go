@@ -10,6 +10,7 @@ import (
 	"github.com/ariefdarmawan/datahub"
 
 	_ "github.com/eaciit/flexmgo"
+	"github.com/eaciit/toolkit"
 	"github.com/smartystreets/goconvey/convey"
 	cv "github.com/smartystreets/goconvey/convey"
 )
@@ -131,6 +132,29 @@ func TestHubNoPool(t *testing.T) {
 								err = hub.Get(d2)
 								cv.So(err, cv.ShouldBeNil)
 								cv.So(d1.Ref2, cv.ShouldEqual, d2.Ref2)
+
+								convey.Convey("aggregate", func() {
+									//-- lets update 6 to 10
+									var res3 []*Dummy
+									hub.Gets(NewDummy(1),
+										dbflex.NewQueryParam().SetWhere(dbflex.And(dbflex.Gte("ref1", 6), dbflex.Lte("ref1", 10))),
+										&res3)
+									for _, d := range res3 {
+										d.Ref2 = 150
+										hub.Save(d)
+									}
+
+									ms := []toolkit.M{}
+									err = hub.Aggregate(NewDummy(1),
+										dbflex.NewQueryParam().
+											SetWhere(dbflex.And(dbflex.Gte("ref1", 6), dbflex.Lte("ref1", 10))).
+											SetAggr(dbflex.NewAggrItem("ref1", dbflex.AggrSum, "ref1"),
+												dbflex.NewAggrItem("ref2", dbflex.AggrSum, "ref2")),
+										&ms)
+									cv.So(err, cv.ShouldBeNil)
+									cv.So(ms[0].GetInt("ref1"), cv.ShouldEqual, 6+7+8+9+10)
+									cv.So(ms[0].GetInt("ref2"), cv.ShouldEqual, 750)
+								})
 							})
 						})
 					})
