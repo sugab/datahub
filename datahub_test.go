@@ -29,6 +29,7 @@ func getConn() (dbflex.IConnection, error) {
 		return nil, err
 	}
 
+	conn.SetFieldNameTag("json")
 	return conn, nil
 }
 
@@ -279,13 +280,14 @@ func NewDummy(i int) *Dummy {
 	d.Name = fmt.Sprintf("Employee %d", i)
 	d.Ref1 = i
 	d.Ref2 = 0
+	d.SetThis(d)
 	return d
 }
 
 type Dummy struct {
 	orm.DataModelBase `bson:"-" json:"-" ecname:"-"`
 
-	ID   string `bson:"_id" json:"_id" ecname:"_id"`
+	ID   string `bson:"_id" json:"_id" ecname:"_id" key:"1"`
 	Name string
 	Ref1 int
 	Ref2 int
@@ -295,10 +297,6 @@ func (d *Dummy) TableName() string {
 	return "dummyTable"
 }
 
-func (d *Dummy) GetID() ([]string, []interface{}) {
-	return []string{"_id"}, []interface{}{d.ID}
-}
-
-func (d *Dummy) SetID(key ...interface{}) {
-	d.ID = key[0].(string)
+func (d *Dummy) SetID(keys ...interface{}) {
+	d.ID = keys[0].(string)
 }

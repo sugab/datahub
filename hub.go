@@ -107,6 +107,7 @@ func (h *Hub) PoolSize() int {
 }
 
 func (h *Hub) Save(data orm.DataModel) error {
+	data.SetThis(data)
 	idx, conn, err := h.getConn()
 	if err != nil {
 		return fmt.Errorf("connection error. %s", err.Error())
@@ -121,6 +122,7 @@ func (h *Hub) Save(data orm.DataModel) error {
 }
 
 func (h *Hub) Insert(data orm.DataModel) error {
+	data.SetThis(data)
 	idx, conn, err := h.getConn()
 	if err != nil {
 		return fmt.Errorf("connection error. %s", err.Error())
@@ -135,6 +137,7 @@ func (h *Hub) Insert(data orm.DataModel) error {
 }
 
 func (h *Hub) Update(data orm.DataModel) error {
+	data.SetThis(data)
 	idx, conn, err := h.getConn()
 	if err != nil {
 		return fmt.Errorf("connection error. %s", err.Error())
@@ -149,6 +152,7 @@ func (h *Hub) Update(data orm.DataModel) error {
 }
 
 func (h *Hub) Delete(data orm.DataModel) error {
+	data.SetThis(data)
 	idx, conn, err := h.getConn()
 	if err != nil {
 		return fmt.Errorf("connection error. %s", err.Error())
@@ -193,6 +197,7 @@ func (h *Hub) Cursor(data orm.DataModel, parm dbflex.QueryParam) (dbflex.ICursor
 */
 
 func (h *Hub) Get(data orm.DataModel) error {
+	data.SetThis(data)
 	idx, conn, err := h.getConn()
 	if err != nil {
 		return fmt.Errorf("connection error. %s", err.Error())
