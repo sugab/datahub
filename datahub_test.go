@@ -287,7 +287,7 @@ func NewDummy(i int) *Dummy {
 type Dummy struct {
 	orm.DataModelBase `bson:"-" json:"-" ecname:"-"`
 
-	ID   string `bson:"_id" json:"_id" ecname:"_id" key:"1"`
+	ID   string `bson:"_id" json:"_id" sqlname:"_id" key:"1"`
 	Name string
 	Ref1 int
 	Ref2 int

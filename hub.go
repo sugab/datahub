@@ -106,6 +106,21 @@ func (h *Hub) PoolSize() int {
 	return h.poolSize
 }
 
+func (h *Hub) DeleteQuery(model orm.DataModel, where *dbflex.Filter) error {
+	idx, conn, err := h.getConn()
+	if err != nil {
+		return fmt.Errorf("connection error. %s", err.Error())
+	}
+	defer h.closeConn(idx, conn)
+
+	cmd := dbflex.From(model.TableName()).Delete()
+	if where != nil {
+		cmd.Where(where)
+	}
+	_, err = conn.Execute(cmd, nil)
+	return err
+}
+
 func (h *Hub) Save(data orm.DataModel) error {
 	data.SetThis(data)
 	idx, conn, err := h.getConn()
