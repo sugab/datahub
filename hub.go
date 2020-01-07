@@ -240,6 +240,26 @@ func (h *Hub) Gets(data orm.DataModel, parm *dbflex.QueryParam, dest interface{}
 	return nil
 }
 
+func (h *Hub) Count(data orm.DataModel, qp *dbflex.QueryParam) (int, error) {
+	idx, conn, err := h.getConn()
+	if err != nil {
+		return 0, fmt.Errorf("connection error. %s", err.Error())
+	}
+	defer h.closeConn(idx, conn)
+
+	var cmd dbflex.ICommand
+	if qp == nil || qp.Where == nil {
+		cmd = dbflex.From(data.TableName())
+	} else {
+		cmd = dbflex.From(data.TableName()).Where(qp.Where)
+	}
+	cur := conn.Cursor(cmd, nil)
+	if err = cur.Error(); err != nil {
+		return 0, fmt.Errorf("cursor error. %s", err.Error())
+	}
+	return cur.Count(), nil
+}
+
 func (h *Hub) Aggregate(data orm.DataModel, parm *dbflex.QueryParam, dest interface{}) error {
 	idx, conn, err := h.getConn()
 	if err != nil {
