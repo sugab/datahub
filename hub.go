@@ -227,6 +227,10 @@ func (h *Hub) Get(data orm.DataModel) error {
 }
 
 func (h *Hub) Gets(data orm.DataModel, parm *dbflex.QueryParam, dest interface{}) error {
+	if parm == nil {
+		parm = dbflex.NewQueryParam()
+	}
+
 	idx, conn, err := h.getConn()
 	if err != nil {
 		return fmt.Errorf("connection error. %s", err.Error())
@@ -241,6 +245,10 @@ func (h *Hub) Gets(data orm.DataModel, parm *dbflex.QueryParam, dest interface{}
 }
 
 func (h *Hub) Count(data orm.DataModel, qp *dbflex.QueryParam) (int, error) {
+	if qp == nil {
+		qp = dbflex.NewQueryParam()
+	}
+
 	idx, conn, err := h.getConn()
 	if err != nil {
 		return 0, fmt.Errorf("connection error. %s", err.Error())
