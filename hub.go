@@ -213,7 +213,7 @@ func (h *Hub) Cursor(data orm.DataModel, parm dbflex.QueryParam) (dbflex.ICursor
 
 func (h *Hub) GetByID(data orm.DataModel, ids ...interface{}) error {
 	data.SetThis(data)
-	data.SetID(...ids)
+	data.SetID(ids...)
 	return h.Get(data)
 }
 
