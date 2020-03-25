@@ -211,6 +211,12 @@ func (h *Hub) Cursor(data orm.DataModel, parm dbflex.QueryParam) (dbflex.ICursor
 }
 */
 
+func (h *Hub) GetByID(data orm.DataModel, ids ...interface{}) error {
+	data.SetThis(data)
+	data.SetID(...ids)
+	return h.Get(data)
+}
+
 func (h *Hub) Get(data orm.DataModel) error {
 	data.SetThis(data)
 	idx, conn, err := h.getConn()
