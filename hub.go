@@ -217,6 +217,48 @@ func (h *Hub) GetByID(data orm.DataModel, ids ...interface{}) error {
 	return h.Get(data)
 }
 
+func (h *Hub) GetByParm(data orm.DataModel, parm *dbflex.QueryParam) error {
+	data.SetThis(data)
+	if parm == nil {
+		parm = dbflex.NewQueryParam()
+	}
+
+	idx, conn, err := h.getConn()
+	if err != nil {
+		return fmt.Errorf("connection error. %s", err.Error())
+	}
+	defer h.closeConn(idx, conn)
+
+	cmd := dbflex.From(data.TableName())
+	if len(parm.Select) == 0 {
+		cmd.Select()
+	} else {
+		cmd.Select(parm.Select...)
+	}
+	if where := parm.Where; where != nil {
+		cmd.Where(where)
+	}
+	if sort := parm.Sort; len(sort) > 0 {
+		cmd.OrderBy(sort...)
+	}
+	if skip := parm.Skip; skip > 0 {
+		cmd.Skip(skip)
+	}
+	if take := parm.Take; take > 0 {
+		cmd.Take(take)
+	}
+	cursor := conn.Cursor(cmd, nil)
+	if err := cursor.Error(); err != nil {
+		return err
+	}
+	defer cursor.Close()
+	if err = cursor.Fetch(data); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (h *Hub) Get(data orm.DataModel) error {
 	data.SetThis(data)
 	idx, conn, err := h.getConn()
