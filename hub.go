@@ -6,6 +6,7 @@ import (
 
 	"git.eaciitapp.com/sebar/dbflex"
 	"git.eaciitapp.com/sebar/dbflex/orm"
+	"github.com/eaciit/toolkit"
 )
 
 type Hub struct {
@@ -151,6 +152,24 @@ func (h *Hub) Insert(data orm.DataModel) error {
 	return nil
 }
 
+func (h *Hub) UpdateField(data orm.DataModel, where *dbflex.Filter, update toolkit.M) error {
+	data.SetThis(data)
+	idx, conn, err := h.getConn()
+	if err != nil {
+		return fmt.Errorf("connection error. %s", err.Error())
+	}
+	defer h.closeConn(idx, conn)
+
+	updatedFields := []string{}
+	for k, _ := range update {
+		updatedFields = append(updatedFields, k)
+	}
+
+	cmd := dbflex.From(data.TableName()).Update(updatedFields...).Where(where)
+	conn.Execute(cmd, toolkit.M{}.Set("data", data))
+	return nil
+}
+
 func (h *Hub) Update(data orm.DataModel) error {
 	data.SetThis(data)
 	idx, conn, err := h.getConn()
@@ -255,7 +274,6 @@ func (h *Hub) GetByParm(data orm.DataModel, parm *dbflex.QueryParam) error {
 	if err = cursor.Fetch(data); err != nil {
 		return err
 	}
-
 	return nil
 }
 
