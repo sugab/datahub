@@ -334,6 +334,38 @@ func (h *Hub) Count(data orm.DataModel, qp *dbflex.QueryParam) (int, error) {
 	return cur.Count(), nil
 }
 
+func (h *Hub) Execute(cmd dbflex.ICommand, parm toolkit.M) error {
+	idx, conn, err := h.getConn()
+	if err != nil {
+		return fmt.Errorf("connection error. %s", err.Error())
+	}
+	defer h.closeConn(idx, conn)
+
+	if _, err = conn.Execute(cmd, parm); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (h *Hub) Populate(cmd dbflex.ICommand, parm toolkit.M, result interface{}) (int, error) {
+	idx, conn, err := h.getConn()
+	if err != nil {
+		return 0, fmt.Errorf("connection error. %s", err.Error())
+	}
+	defer h.closeConn(idx, conn)
+
+	c := conn.Cursor(cmd, parm)
+	if err = c.Error(); err != nil {
+		return 0, fmt.Errorf("unable to prepare cursor. %s", err.Error())
+	}
+	if err = c.Fetchs(result, 0); err != nil {
+		return 0, fmt.Errorf("unable to fetch data. %s", err.Error())
+	}
+
+	return c.Count(), nil
+}
+
 func (h *Hub) Aggregate(data orm.DataModel, parm *dbflex.QueryParam, dest interface{}) error {
 	idx, conn, err := h.getConn()
 	if err != nil {
