@@ -3,6 +3,7 @@ package datahub
 import (
 	"fmt"
 	"sync"
+	"time"
 
 	"git.eaciitapp.com/sebar/dbflex"
 	"git.eaciitapp.com/sebar/dbflex/orm"
@@ -24,6 +25,13 @@ func NewHub(fn func() (dbflex.IConnection, error), usePool bool, poolsize int) *
 	h.connFn = fn
 	h.usePool = usePool
 	h.poolSize = poolsize
+
+	if h.usePool {
+		h.pool = dbflex.NewDbPooling(h.poolSize, h.connFn)
+		h.pool.Timeout = 7 * time.Second
+		h.pool.AutoClose = 5 * time.Second
+		//h.pool.AutoRelease = 3 * time.Second
+	}
 	return h
 }
 
@@ -38,6 +46,9 @@ func (h *Hub) getConnFromPool() (int, dbflex.IConnection, error) {
 
 	if h.pool == nil {
 		h.pool = dbflex.NewDbPooling(h.poolSize, h.connFn)
+		h.pool.Timeout = 7 * time.Second
+		h.pool.AutoClose = 5 * time.Second
+		//h.pool.AutoRelease = 3 * time.Second
 	}
 
 	it, err := h.pool.Get()
@@ -55,22 +66,40 @@ func (h *Hub) getConnFromPool() (int, dbflex.IConnection, error) {
 	return idx, conn, nil
 }
 
+func (h *Hub) SetAutoCloseDuration(d time.Duration) *Hub {
+	if h.usePool {
+		if h.pool == nil {
+			h.pool = dbflex.NewDbPooling(h.poolSize, h.connFn)
+		}
+		h.pool.AutoClose = d
+	}
+	return h
+}
+
+func (h *Hub) SetAutoReleaseDuration(d time.Duration) *Hub {
+	if h.usePool {
+		if h.pool == nil {
+			h.pool = dbflex.NewDbPooling(h.poolSize, h.connFn)
+		}
+		h.pool.AutoRelease = d
+	}
+	return h
+}
+
 func (h *Hub) closeConn(idx int, conn dbflex.IConnection) {
 	if !h.usePool {
 		conn.Close()
 	}
 
+	if h.mtx == nil {
+		h.mtx = new(sync.Mutex)
+	}
+	h.mtx.Lock()
+	defer h.mtx.Unlock()
+
 	if idx < len(h.poolItems) && idx != -1 {
-		if h.mtx == nil {
-			h.mtx = new(sync.Mutex)
-		}
-
-		h.mtx.Lock()
-		defer h.mtx.Unlock()
-
 		itemCount := len(h.poolItems)
 		h.poolItems[idx].Release()
-
 		if itemCount == 0 {
 			h.poolItems = []*dbflex.PoolItem{}
 		} else if idx == 0 {
@@ -334,18 +363,14 @@ func (h *Hub) Count(data orm.DataModel, qp *dbflex.QueryParam) (int, error) {
 	return cur.Count(), nil
 }
 
-func (h *Hub) Execute(cmd dbflex.ICommand, parm toolkit.M) error {
+func (h *Hub) Execute(cmd dbflex.ICommand, parm toolkit.M) (interface{}, error) {
 	idx, conn, err := h.getConn()
 	if err != nil {
-		return fmt.Errorf("connection error. %s", err.Error())
+		return nil, fmt.Errorf("connection error. %s", err.Error())
 	}
 	defer h.closeConn(idx, conn)
 
-	if _, err = conn.Execute(cmd, parm); err != nil {
-		return err
-	}
-
-	return nil
+	return conn.Execute(cmd, parm)
 }
 
 func (h *Hub) Populate(cmd dbflex.ICommand, parm toolkit.M, result interface{}) (int, error) {
