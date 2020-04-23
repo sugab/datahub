@@ -18,6 +18,7 @@ type Hub struct {
 
 	poolItems []*dbflex.PoolItem
 	mtx       *sync.Mutex
+	_log      *toolkit.LogEngine
 }
 
 func NewHub(fn func() (dbflex.IConnection, error), usePool bool, poolsize int) *Hub {
@@ -27,10 +28,25 @@ func NewHub(fn func() (dbflex.IConnection, error), usePool bool, poolsize int) *
 	h.poolSize = poolsize
 
 	if h.usePool {
-		h.pool = dbflex.NewDbPooling(h.poolSize, h.connFn)
+		h.pool = dbflex.NewDbPooling(h.poolSize, h.connFn).SetLog(h.Log())
 		h.pool.Timeout = 7 * time.Second
 		h.pool.AutoClose = 5 * time.Second
 		//h.pool.AutoRelease = 3 * time.Second
+	}
+	return h
+}
+
+func (h *Hub) Log() *toolkit.LogEngine {
+	if h._log == nil {
+		h._log = toolkit.NewLogEngine(true, false, "", "", "")
+	}
+	return h._log
+}
+
+func (h *Hub) SetLog(l *toolkit.LogEngine) *Hub {
+	h._log = l
+	if h.pool != nil {
+		h.pool.SetLog(l)
 	}
 	return h
 }
@@ -45,7 +61,7 @@ func (h *Hub) getConnFromPool() (int, dbflex.IConnection, error) {
 	}
 
 	if h.pool == nil {
-		h.pool = dbflex.NewDbPooling(h.poolSize, h.connFn)
+		h.pool = dbflex.NewDbPooling(h.poolSize, h.connFn).SetLog(h.Log())
 		h.pool.Timeout = 7 * time.Second
 		h.pool.AutoClose = 5 * time.Second
 		//h.pool.AutoRelease = 3 * time.Second
