@@ -51,6 +51,14 @@ func (h *Hub) SetLog(l *toolkit.LogEngine) *Hub {
 	return h
 }
 
+func (h *Hub) GetConnection() (int, dbflex.IConnection, error) {
+	return h.getConn()
+}
+
+func (h *Hub) CloseConnection(idx int, conn dbflex.IConnection) {
+	h.closeConn(idx, conn)
+}
+
 func (h *Hub) getConnFromPool() (int, dbflex.IConnection, error) {
 	if h.poolSize == 0 {
 		h.poolSize = 100
