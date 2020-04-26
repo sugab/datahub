@@ -5,8 +5,9 @@ import (
 	"sync"
 	"time"
 
-	"git.eaciitapp.com/sebar/dbflex"
-	"git.eaciitapp.com/sebar/dbflex/orm"
+	"git.kanosolution.net/kano/dbflex"
+	"git.kanosolution.net/kano/dbflex/orm"
+
 	"github.com/eaciit/toolkit"
 )
 

@@ -4,9 +4,8 @@ import (
 	"fmt"
 	"testing"
 
-	"git.eaciitapp.com/sebar/dbflex/orm"
-
-	"git.eaciitapp.com/sebar/dbflex"
+	"git.kanosolution.net/kano/dbflex"
+	"git.kanosolution.net/kano/dbflex/orm"
 	"github.com/ariefdarmawan/datahub"
 
 	_ "github.com/eaciit/flexmgo"
