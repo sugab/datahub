@@ -106,6 +106,7 @@ func (h *Hub) SetAutoReleaseDuration(d time.Duration) *Hub {
 		if h.pool == nil {
 			h.pool = dbflex.NewDbPooling(h.poolSize, h.connFn)
 		}
+		h.pool.Timeout = d + time.Duration(5*time.Second)
 		h.pool.AutoRelease = d
 	}
 	return h
@@ -457,4 +458,18 @@ func (h *Hub) Close() {
 	if h.usePool {
 		h.pool.Close()
 	}
+}
+
+func (h *Hub) SaveObject(name string, object interface{}) error {
+	idx, conn, err := h.getConn()
+	if err != nil {
+		return fmt.Errorf("connection error. %s", err.Error())
+	}
+	defer h.closeConn(idx, conn)
+
+	cmd := dbflex.From(name).Save()
+	if _, err = conn.Execute(cmd, toolkit.M{}.Set("data", object)); err != nil {
+		return fmt.Errorf("unable to save. %s", err.Error())
+	}
+	return nil
 }
