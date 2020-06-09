@@ -293,7 +293,7 @@ type Dummy struct {
 }
 
 func (d *Dummy) TableName() string {
-	return "dummyTable"
+	return "testTable"
 }
 
 func (d *Dummy) SetID(keys ...interface{}) {
