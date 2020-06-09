@@ -60,6 +60,10 @@ func (h *Hub) CloseConnection(idx int, conn dbflex.IConnection) {
 	h.closeConn(idx, conn)
 }
 
+func (h *Hub) GetClassicConnection() (dbflex.IConnection, error) {
+	return h.connFn()
+}
+
 func (h *Hub) getConnFromPool() (int, dbflex.IConnection, error) {
 	if h.poolSize == 0 {
 		h.poolSize = 100
@@ -71,7 +75,7 @@ func (h *Hub) getConnFromPool() (int, dbflex.IConnection, error) {
 
 	if h.pool == nil {
 		h.pool = dbflex.NewDbPooling(h.poolSize, h.connFn).SetLog(h.Log())
-		h.pool.Timeout = 7 * time.Second
+		h.pool.Timeout = 90 * time.Second
 		h.pool.AutoClose = 5 * time.Second
 		//h.pool.AutoRelease = 3 * time.Second
 	}
