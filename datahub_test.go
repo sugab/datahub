@@ -8,7 +8,7 @@ import (
 	"git.kanosolution.net/kano/dbflex/orm"
 	"github.com/ariefdarmawan/datahub"
 
-	_ "github.com/eaciit/flexmgo"
+	_ "github.com/ariefdarmawan/flexmgo"
 	"github.com/eaciit/toolkit"
 	"github.com/smartystreets/goconvey/convey"
 	cv "github.com/smartystreets/goconvey/convey"
