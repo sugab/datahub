@@ -63,7 +63,7 @@ func TestHubNoPool(t *testing.T) {
 			convey.So(cursor.Error(), convey.ShouldBeNil)
 			defer cursor.Close()
 			var res1, res2 []*Dummy
-			err = cursor.Fetchs(&res1, 0)
+			err = cursor.Fetchs(&res1, 0).Close()
 			convey.So(err, convey.ShouldBeNil)
 			convey.So(len(res1), convey.ShouldEqual, 50)
 
@@ -195,7 +195,7 @@ func TestHubWithPool(t *testing.T) {
 			convey.So(cursor.Error(), convey.ShouldBeNil)
 			defer cursor.Close()
 			var res1, res2 []*Dummy
-			err = cursor.Fetchs(&res1, 0)
+			err = cursor.Fetchs(&res1, 0).Close()
 			convey.So(err, convey.ShouldBeNil)
 			convey.So(len(res1), convey.ShouldEqual, 50)
 

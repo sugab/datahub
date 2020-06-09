@@ -330,7 +330,7 @@ func (h *Hub) GetByParm(data orm.DataModel, parm *dbflex.QueryParam) error {
 		return err
 	}
 	defer cursor.Close()
-	if err = cursor.Fetch(data); err != nil {
+	if err = cursor.Fetch(data).Close(); err != nil {
 		return err
 	}
 	return nil
@@ -414,7 +414,7 @@ func (h *Hub) Populate(cmd dbflex.ICommand, parm toolkit.M, result interface{}) 
 	if err = c.Error(); err != nil {
 		return 0, fmt.Errorf("unable to prepare cursor. %s", err.Error())
 	}
-	if err = c.Fetchs(result, 0); err != nil {
+	if err = c.Fetchs(result, 0).Close(); err != nil {
 		return 0, fmt.Errorf("unable to fetch data. %s", err.Error())
 	}
 
@@ -454,7 +454,7 @@ func (h *Hub) Aggregate(data orm.DataModel, parm *dbflex.QueryParam, dest interf
 	}
 	defer cur.Close()
 
-	err = cur.Fetchs(dest, 0)
+	err = cur.Fetchs(dest, 0).Close()
 	return err
 }
 
