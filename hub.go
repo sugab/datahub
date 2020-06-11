@@ -211,7 +211,7 @@ func (h *Hub) Insert(data orm.DataModel) error {
 	return nil
 }
 
-func (h *Hub) UpdateField(data orm.DataModel, where *dbflex.Filter, update toolkit.M) error {
+func (h *Hub) UpdateField(data orm.DataModel, where *dbflex.Filter, fields ...string) error {
 	data.SetThis(data)
 	idx, conn, err := h.getConn()
 	if err != nil {
@@ -219,11 +219,7 @@ func (h *Hub) UpdateField(data orm.DataModel, where *dbflex.Filter, update toolk
 	}
 	defer h.closeConn(idx, conn)
 
-	updatedFields := []string{}
-	for k, _ := range update {
-		updatedFields = append(updatedFields, k)
-	}
-
+	updatedFields := fields
 	cmd := dbflex.From(data.TableName()).Update(updatedFields...).Where(where)
 	conn.Execute(cmd, toolkit.M{}.Set("data", data))
 	return nil
@@ -478,6 +474,20 @@ func (h *Hub) SaveAny(name string, object interface{}) error {
 	defer h.closeConn(idx, conn)
 
 	cmd := dbflex.From(name).Save()
+	if _, err = conn.Execute(cmd, toolkit.M{}.Set("data", object)); err != nil {
+		return fmt.Errorf("unable to save. %s", err.Error())
+	}
+	return nil
+}
+
+func (h *Hub) UpdateAny(name string, object interface{}, fields ...string) error {
+	idx, conn, err := h.getConn()
+	if err != nil {
+		return fmt.Errorf("connection error. %s", err.Error())
+	}
+	defer h.closeConn(idx, conn)
+
+	cmd := dbflex.From(name).Update(fields...)
 	if _, err = conn.Execute(cmd, toolkit.M{}.Set("data", object)); err != nil {
 		return fmt.Errorf("unable to save. %s", err.Error())
 	}
