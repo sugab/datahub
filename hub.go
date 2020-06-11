@@ -393,14 +393,17 @@ func (h *Hub) Count(data orm.DataModel, qp *dbflex.QueryParam) (int, error) {
 	return cur.Count(), nil
 }
 
-func (h *Hub) Execute(cmd dbflex.ICommand, parm toolkit.M) (interface{}, error) {
+func (h *Hub) Execute(cmd dbflex.ICommand, object interface{}, parm toolkit.M) (interface{}, error) {
 	idx, conn, err := h.getConn()
 	if err != nil {
 		return nil, fmt.Errorf("connection error. %s", err.Error())
 	}
 	defer h.closeConn(idx, conn)
 
-	return conn.Execute(cmd, parm)
+	if parm == nil {
+		parm = toolkit.M{}
+	}
+	return conn.Execute(cmd, parm.Set("data", object))
 }
 
 func (h *Hub) Populate(cmd dbflex.ICommand, parm toolkit.M, result interface{}) (int, error) {
@@ -414,21 +417,24 @@ func (h *Hub) Populate(cmd dbflex.ICommand, parm toolkit.M, result interface{}) 
 	if err = c.Error(); err != nil {
 		return 0, fmt.Errorf("unable to prepare cursor. %s", err.Error())
 	}
-	if err = c.Fetchs(result, 0).Close(); err != nil {
+	defer c.Close()
+	if err = c.Fetchs(result, 0).Error(); err != nil {
 		return 0, fmt.Errorf("unable to fetch data. %s", err.Error())
 	}
-
 	return c.Count(), nil
 }
 
-func (h *Hub) Aggregate(data orm.DataModel, parm *dbflex.QueryParam, dest interface{}) error {
+func (h *Hub) PopulateByParm(tableName string, parm *dbflex.QueryParam, dest interface{}) error {
 	idx, conn, err := h.getConn()
 	if err != nil {
 		return fmt.Errorf("connection error. %s", err.Error())
 	}
 	defer h.closeConn(idx, conn)
 
-	qry := dbflex.From(data.TableName())
+	qry := dbflex.From(tableName)
+	if w := parm.Select; w != nil {
+		qry.Select(w...)
+	}
 	if w := parm.Where; w != nil {
 		qry.Where(w)
 	}
@@ -464,7 +470,7 @@ func (h *Hub) Close() {
 	}
 }
 
-func (h *Hub) SaveObject(name string, object interface{}) error {
+func (h *Hub) SaveAny(name string, object interface{}) error {
 	idx, conn, err := h.getConn()
 	if err != nil {
 		return fmt.Errorf("connection error. %s", err.Error())

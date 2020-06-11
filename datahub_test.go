@@ -145,7 +145,7 @@ func TestHubNoPool(t *testing.T) {
 									}
 
 									ms := []toolkit.M{}
-									err = hub.Aggregate(NewDummy(1),
+									err = hub.PopulateByParm(NewDummy(1).TableName(),
 										dbflex.NewQueryParam().
 											SetWhere(dbflex.And(dbflex.Gte("ref1", 6), dbflex.Lte("ref1", 10))).
 											SetAggr(dbflex.NewAggrItem("ref1", dbflex.AggrSum, "ref1"),
