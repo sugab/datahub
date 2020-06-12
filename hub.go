@@ -255,36 +255,6 @@ func (h *Hub) Delete(data orm.DataModel) error {
 	return nil
 }
 
-/*
-func (h *Hub) Cursor(data orm.DataModel, parm dbflex.QueryParam) (dbflex.ICursor, error) {
-	idx, conn, err := h.getConn()
-	if err != nil {
-		return nil, fmt.Errorf("connection error. %s", err.Error())
-	}
-	defer h.closeConn(idx, conn)
-
-	qry := dbflex.From(data.TableName())
-	if w := parm.Where; w != nil {
-		qry.Where(w)
-	}
-	if o := parm.Sort; len(o) > 0 {
-		qry.OrderBy(o...)
-	}
-	if o := parm.Skip; o > 0 {
-		qry.Skip(o)
-	}
-	if o := parm.Take; o > 0 {
-		qry.Take(o)
-	}
-	cur := conn.Cursor(qry, nil)
-	if cur.Error() != nil {
-		cur.Close()
-		return nil, fmt.Errorf("cursor error. %s", cur.Error().Error())
-	}
-	return cur, nil
-}
-*/
-
 func (h *Hub) GetByID(data orm.DataModel, ids ...interface{}) error {
 	data.SetThis(data)
 	data.SetID(ids...)
@@ -455,6 +425,23 @@ func (h *Hub) PopulateByParm(tableName string, parm *dbflex.QueryParam, dest int
 		return fmt.Errorf("error when running cursor for aggregation. %s", err.Error())
 	}
 	defer cur.Close()
+
+	err = cur.Fetchs(dest, 0).Close()
+	return err
+}
+
+func (h *Hub) PopulateSQL(sql string, dest interface{}) error {
+	idx, conn, err := h.getConn()
+	if err != nil {
+		return fmt.Errorf("connection error. %s", err.Error())
+	}
+	defer h.closeConn(idx, conn)
+
+	qry := dbflex.SQL(sql)
+	cur := conn.Cursor(qry, nil)
+	if err = cur.Error(); err != nil {
+		return fmt.Errorf("error when running cursor for populatesql. %s", err.Error())
+	}
 
 	err = cur.Fetchs(dest, 0).Close()
 	return err
