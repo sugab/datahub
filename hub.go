@@ -20,6 +20,8 @@ type Hub struct {
 	poolItems []*dbflex.PoolItem
 	mtx       *sync.Mutex
 	_log      *toolkit.LogEngine
+
+	txconn dbflex.IConnection
 }
 
 func NewHub(fn func() (dbflex.IConnection, error), usePool bool, poolsize int) *Hub {
@@ -65,6 +67,10 @@ func (h *Hub) GetClassicConnection() (dbflex.IConnection, error) {
 }
 
 func (h *Hub) getConnFromPool() (int, dbflex.IConnection, error) {
+	if h.txconn != nil {
+		return -1, h.txconn, nil
+	}
+
 	if h.poolSize == 0 {
 		h.poolSize = 100
 	}
@@ -117,6 +123,10 @@ func (h *Hub) SetAutoReleaseDuration(d time.Duration) *Hub {
 }
 
 func (h *Hub) closeConn(idx int, conn dbflex.IConnection) {
+	if h.txconn != nil {
+		return
+	}
+
 	if !h.usePool {
 		conn.Close()
 	}
@@ -143,6 +153,10 @@ func (h *Hub) closeConn(idx int, conn dbflex.IConnection) {
 }
 
 func (h *Hub) getConn() (int, dbflex.IConnection, error) {
+	if h.txconn != nil {
+		return -1, h.txconn, nil
+	}
+
 	if h.connFn == nil {
 		return -1, nil, fmt.Errorf("connection fn is not yet defined")
 	}
