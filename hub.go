@@ -11,6 +11,7 @@ import (
 	"github.com/eaciit/toolkit"
 )
 
+// Hub main datahub object. This object need to be initiated to work with datahub
 type Hub struct {
 	connFn   func() (dbflex.IConnection, error)
 	usePool  bool
@@ -24,6 +25,7 @@ type Hub struct {
 	txconn dbflex.IConnection
 }
 
+// NewHub function to create new hub
 func NewHub(fn func() (dbflex.IConnection, error), usePool bool, poolsize int) *Hub {
 	h := new(Hub)
 	h.connFn = fn
@@ -39,6 +41,7 @@ func NewHub(fn func() (dbflex.IConnection, error), usePool bool, poolsize int) *
 	return h
 }
 
+// Log get logger object
 func (h *Hub) Log() *toolkit.LogEngine {
 	if h._log == nil {
 		h._log = toolkit.NewLogEngine(true, false, "", "", "")
@@ -46,6 +49,7 @@ func (h *Hub) Log() *toolkit.LogEngine {
 	return h._log
 }
 
+// SetLog set logger
 func (h *Hub) SetLog(l *toolkit.LogEngine) *Hub {
 	h._log = l
 	if h.pool != nil {
@@ -54,14 +58,19 @@ func (h *Hub) SetLog(l *toolkit.LogEngine) *Hub {
 	return h
 }
 
+// GetConnection to generate connection. It will return index, connection and error. Index and connection need
+// to be retain for purpose of closing the connection. It is advised to use other DB operation related of Hub rather
+// than build manual connection
 func (h *Hub) GetConnection() (int, dbflex.IConnection, error) {
 	return h.getConn()
 }
 
+// CloseConnection to close connection
 func (h *Hub) CloseConnection(idx int, conn dbflex.IConnection) {
 	h.closeConn(idx, conn)
 }
 
+// GetClassicConnection get connection without using pool. CleanUp operation need to be done manually
 func (h *Hub) GetClassicConnection() (dbflex.IConnection, error) {
 	return h.connFn()
 }
@@ -101,6 +110,7 @@ func (h *Hub) getConnFromPool() (int, dbflex.IConnection, error) {
 	return idx, conn, nil
 }
 
+// SetAutoCloseDuration set duration for a connection inside Hub Pool to be closed if it is not being used
 func (h *Hub) SetAutoCloseDuration(d time.Duration) *Hub {
 	if h.usePool {
 		if h.pool == nil {
@@ -111,6 +121,7 @@ func (h *Hub) SetAutoCloseDuration(d time.Duration) *Hub {
 	return h
 }
 
+// SetAutoReleaseDuration set duration for a connection in pool to be released for a process
 func (h *Hub) SetAutoReleaseDuration(d time.Duration) *Hub {
 	if h.usePool {
 		if h.pool == nil {
@@ -172,14 +183,17 @@ func (h *Hub) getConn() (int, dbflex.IConnection, error) {
 	return -1, conn, nil
 }
 
+// UsePool is a hub using pool
 func (h *Hub) UsePool() bool {
 	return h.usePool
 }
 
+// PoolSize returns size of the pool
 func (h *Hub) PoolSize() int {
 	return h.poolSize
 }
 
+// DeleteQuery delete object in database based on specific model and filter
 func (h *Hub) DeleteQuery(model orm.DataModel, where *dbflex.Filter) error {
 	idx, conn, err := h.getConn()
 	if err != nil {
@@ -195,6 +209,7 @@ func (h *Hub) DeleteQuery(model orm.DataModel, where *dbflex.Filter) error {
 	return err
 }
 
+// Save will save data into database
 func (h *Hub) Save(data orm.DataModel) error {
 	data.SetThis(data)
 	idx, conn, err := h.getConn()
@@ -210,6 +225,7 @@ func (h *Hub) Save(data orm.DataModel) error {
 	return nil
 }
 
+// Insert will create data into database
 func (h *Hub) Insert(data orm.DataModel) error {
 	data.SetThis(data)
 	idx, conn, err := h.getConn()
@@ -225,6 +241,7 @@ func (h *Hub) Insert(data orm.DataModel) error {
 	return nil
 }
 
+// UpdateField update relevant fields in data based on specific filter
 func (h *Hub) UpdateField(data orm.DataModel, where *dbflex.Filter, fields ...string) error {
 	data.SetThis(data)
 	idx, conn, err := h.getConn()
@@ -239,6 +256,7 @@ func (h *Hub) UpdateField(data orm.DataModel, where *dbflex.Filter, fields ...st
 	return nil
 }
 
+// Update will update single data in database based on specific model
 func (h *Hub) Update(data orm.DataModel) error {
 	data.SetThis(data)
 	idx, conn, err := h.getConn()
@@ -254,6 +272,7 @@ func (h *Hub) Update(data orm.DataModel) error {
 	return nil
 }
 
+// Delete delete respective model record on database
 func (h *Hub) Delete(data orm.DataModel) error {
 	data.SetThis(data)
 	idx, conn, err := h.getConn()
@@ -269,12 +288,14 @@ func (h *Hub) Delete(data orm.DataModel) error {
 	return nil
 }
 
+// GetByID returns single data based on its ID. Data need to be comply with orm.DataModel
 func (h *Hub) GetByID(data orm.DataModel, ids ...interface{}) error {
 	data.SetThis(data)
 	data.SetID(ids...)
 	return h.Get(data)
 }
 
+// GetByParm return single data based on filter
 func (h *Hub) GetByParm(data orm.DataModel, parm *dbflex.QueryParam) error {
 	data.SetThis(data)
 	if parm == nil {
@@ -316,6 +337,7 @@ func (h *Hub) GetByParm(data orm.DataModel, parm *dbflex.QueryParam) error {
 	return nil
 }
 
+// Get return single data based on model. It will find record based on releant ID field
 func (h *Hub) Get(data orm.DataModel) error {
 	data.SetThis(data)
 	idx, conn, err := h.getConn()
@@ -331,6 +353,7 @@ func (h *Hub) Get(data orm.DataModel) error {
 	return nil
 }
 
+// Gets return all data based on model and filter
 func (h *Hub) Gets(data orm.DataModel, parm *dbflex.QueryParam, dest interface{}) error {
 	if parm == nil {
 		parm = dbflex.NewQueryParam()
@@ -349,6 +372,7 @@ func (h *Hub) Gets(data orm.DataModel, parm *dbflex.QueryParam, dest interface{}
 	return nil
 }
 
+// Count returns number of data based on model and filter
 func (h *Hub) Count(data orm.DataModel, qp *dbflex.QueryParam) (int, error) {
 	if qp == nil {
 		qp = dbflex.NewQueryParam()
@@ -373,6 +397,7 @@ func (h *Hub) Count(data orm.DataModel, qp *dbflex.QueryParam) (int, error) {
 	return cur.Count(), nil
 }
 
+// Execute will execute command. Normally used with no-datamodel object
 func (h *Hub) Execute(cmd dbflex.ICommand, object interface{}, parm toolkit.M) (interface{}, error) {
 	idx, conn, err := h.getConn()
 	if err != nil {
@@ -386,6 +411,7 @@ func (h *Hub) Execute(cmd dbflex.ICommand, object interface{}, parm toolkit.M) (
 	return conn.Execute(cmd, parm.Set("data", object))
 }
 
+// Populate will return all data based on command. Normally used with no-datamodel object
 func (h *Hub) Populate(cmd dbflex.ICommand, parm toolkit.M, result interface{}) (int, error) {
 	idx, conn, err := h.getConn()
 	if err != nil {
@@ -404,6 +430,7 @@ func (h *Hub) Populate(cmd dbflex.ICommand, parm toolkit.M, result interface{}) 
 	return c.Count(), nil
 }
 
+// PopulateByParm returns all data based on table name and QueryParm. Normally used with no-datamodel object
 func (h *Hub) PopulateByParm(tableName string, parm *dbflex.QueryParam, dest interface{}) error {
 	idx, conn, err := h.getConn()
 	if err != nil {
@@ -444,6 +471,7 @@ func (h *Hub) PopulateByParm(tableName string, parm *dbflex.QueryParam, dest int
 	return err
 }
 
+// PopulateSQL returns data based on SQL Query
 func (h *Hub) PopulateSQL(sql string, dest interface{}) error {
 	idx, conn, err := h.getConn()
 	if err != nil {
@@ -467,6 +495,7 @@ func (h *Hub) Close() {
 	}
 }
 
+// SaveAny save any object into database table. Normally used with no-datamodel object
 func (h *Hub) SaveAny(name string, object interface{}) error {
 	idx, conn, err := h.getConn()
 	if err != nil {
@@ -481,6 +510,8 @@ func (h *Hub) SaveAny(name string, object interface{}) error {
 	return nil
 }
 
+// UpdateAny update specific fields on database table. Normally used with no-datamodel object
+// Will be deprecated
 func (h *Hub) UpdateAny(name string, object interface{}, fields ...string) error {
 	idx, conn, err := h.getConn()
 	if err != nil {
