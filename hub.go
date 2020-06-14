@@ -398,28 +398,26 @@ func (h *Hub) Count(data orm.DataModel, qp *dbflex.QueryParam) (int, error) {
 }
 
 // Execute will execute command. Normally used with no-datamodel object
-func (h *Hub) Execute(cmd dbflex.ICommand, object interface{}, parm toolkit.M) (interface{}, error) {
+func (h *Hub) Execute(cmd dbflex.ICommand, object interface{}) (interface{}, error) {
 	idx, conn, err := h.getConn()
 	if err != nil {
 		return nil, fmt.Errorf("connection error. %s", err.Error())
 	}
 	defer h.closeConn(idx, conn)
 
-	if parm == nil {
-		parm = toolkit.M{}
-	}
+	parm := toolkit.M{}
 	return conn.Execute(cmd, parm.Set("data", object))
 }
 
 // Populate will return all data based on command. Normally used with no-datamodel object
-func (h *Hub) Populate(cmd dbflex.ICommand, parm toolkit.M, result interface{}) (int, error) {
+func (h *Hub) Populate(cmd dbflex.ICommand, result interface{}) (int, error) {
 	idx, conn, err := h.getConn()
 	if err != nil {
 		return 0, fmt.Errorf("connection error. %s", err.Error())
 	}
 	defer h.closeConn(idx, conn)
 
-	c := conn.Cursor(cmd, parm)
+	c := conn.Cursor(cmd, nil)
 	if err = c.Error(); err != nil {
 		return 0, fmt.Errorf("unable to prepare cursor. %s", err.Error())
 	}
