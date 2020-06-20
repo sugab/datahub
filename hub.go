@@ -523,3 +523,13 @@ func (h *Hub) UpdateAny(name string, object interface{}, fields ...string) error
 	}
 	return nil
 }
+
+// EnsureTable will ensure existense of table according to given object
+func (h *Hub) EnsureTable(name string, keys []string, object interface{}) error {
+	idx, conn, e := h.GetConnection()
+	if e != nil {
+		return e
+	}
+	defer h.CloseConnection(idx, conn)
+	return conn.EnsureTable(name, keys, object)
+}
