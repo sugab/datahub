@@ -533,3 +533,13 @@ func (h *Hub) EnsureTable(name string, keys []string, object interface{}) error 
 	defer h.CloseConnection(idx, conn)
 	return conn.EnsureTable(name, keys, object)
 }
+
+// Validate validate if a connection can be established
+func (h *Hub) Validate() error {
+	idx, conn, e := h.GetConnection()
+	if e != nil {
+		return e
+	}
+	defer h.CloseConnection(idx, conn)
+	return nil
+}
