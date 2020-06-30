@@ -106,7 +106,7 @@ func (h *Hub) getConnFromPool() (int, dbflex.IConnection, error) {
 	defer h.mtx.Unlock()
 
 	h.poolItems = append(h.poolItems, it)
-	idx = len(h.poolItems) - 1
+	idx = it.ID
 	return idx, conn, nil
 }
 
@@ -148,19 +148,28 @@ func (h *Hub) closeConn(idx int, conn dbflex.IConnection) {
 	h.mtx.Lock()
 	defer h.mtx.Unlock()
 
-	if idx < len(h.poolItems) && idx != -1 {
-		itemCount := len(h.poolItems)
-		h.poolItems[idx].Release()
-		if itemCount == 0 {
-			h.poolItems = []*dbflex.PoolItem{}
-		} else if idx == 0 {
-			h.poolItems = h.poolItems[1:]
-		} else if idx == len(h.poolItems)-1 {
-			h.poolItems = h.poolItems[:idx]
-		} else {
-			h.poolItems = append(h.poolItems[:idx], h.poolItems[idx+1:]...)
+	for _, it := range h.poolItems {
+		if it.ID == idx {
+			it.Release()
+			break
 		}
 	}
+
+	/*
+		if idx < len(h.poolItems) && idx != -1 {
+			itemCount := len(h.poolItems)
+			h.poolItems[idx].Release()
+			if itemCount == 0 {
+				h.poolItems = []*dbflex.PoolItem{}
+			} else if idx == 0 {
+				h.poolItems = h.poolItems[1:]
+			} else if idx == len(h.poolItems)-1 {
+				h.poolItems = h.poolItems[:idx]
+			} else {
+				h.poolItems = append(h.poolItems[:idx], h.poolItems[idx+1:]...)
+			}
+		}
+	*/
 }
 
 func (h *Hub) getConn() (int, dbflex.IConnection, error) {
