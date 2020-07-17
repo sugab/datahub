@@ -106,7 +106,7 @@ func (h *Hub) getConnFromPool() (int, dbflex.IConnection, error) {
 	defer h.mtx.Unlock()
 
 	h.poolItems = append(h.poolItems, it)
-	idx = len(h.poolItems) - 1
+	idx = it.ID
 	return idx, conn, nil
 }
 
@@ -148,19 +148,28 @@ func (h *Hub) closeConn(idx int, conn dbflex.IConnection) {
 	h.mtx.Lock()
 	defer h.mtx.Unlock()
 
-	if idx < len(h.poolItems) && idx != -1 {
-		itemCount := len(h.poolItems)
-		h.poolItems[idx].Release()
-		if itemCount == 0 {
-			h.poolItems = []*dbflex.PoolItem{}
-		} else if idx == 0 {
-			h.poolItems = h.poolItems[1:]
-		} else if idx == len(h.poolItems)-1 {
-			h.poolItems = h.poolItems[:idx]
-		} else {
-			h.poolItems = append(h.poolItems[:idx], h.poolItems[idx+1:]...)
+	for _, it := range h.poolItems {
+		if it.ID == idx {
+			it.Release()
+			break
 		}
 	}
+
+	/*
+		if idx < len(h.poolItems) && idx != -1 {
+			itemCount := len(h.poolItems)
+			h.poolItems[idx].Release()
+			if itemCount == 0 {
+				h.poolItems = []*dbflex.PoolItem{}
+			} else if idx == 0 {
+				h.poolItems = h.poolItems[1:]
+			} else if idx == len(h.poolItems)-1 {
+				h.poolItems = h.poolItems[:idx]
+			} else {
+				h.poolItems = append(h.poolItems[:idx], h.poolItems[idx+1:]...)
+			}
+		}
+	*/
 }
 
 func (h *Hub) getConn() (int, dbflex.IConnection, error) {
@@ -521,5 +530,25 @@ func (h *Hub) UpdateAny(name string, object interface{}, fields ...string) error
 	if _, err = conn.Execute(cmd, toolkit.M{}.Set("data", object)); err != nil {
 		return fmt.Errorf("unable to save. %s", err.Error())
 	}
+	return nil
+}
+
+// EnsureTable will ensure existense of table according to given object
+func (h *Hub) EnsureTable(name string, keys []string, object interface{}) error {
+	idx, conn, e := h.GetConnection()
+	if e != nil {
+		return e
+	}
+	defer h.CloseConnection(idx, conn)
+	return conn.EnsureTable(name, keys, object)
+}
+
+// Validate validate if a connection can be established
+func (h *Hub) Validate() error {
+	idx, conn, e := h.GetConnection()
+	if e != nil {
+		return e
+	}
+	defer h.CloseConnection(idx, conn)
 	return nil
 }
