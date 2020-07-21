@@ -27,6 +27,12 @@ func (h *Hub) BeginTx() (*Hub, error) {
 
 // Commit commits all change into database
 func (h *Hub) Commit() error {
+	defer func() {
+		if h != nil && h.txconn != nil {
+			h.txconn.Close()
+			h.txconn = nil
+		}
+	}()
 	if h.txconn == nil {
 		return errors.New("fail Commit: handler has no transactional connection")
 	}
@@ -38,6 +44,12 @@ func (h *Hub) Commit() error {
 
 // Rollback to reverts back all change into database
 func (h *Hub) Rollback() error {
+	defer func() {
+		if h != nil && h.txconn != nil {
+			h.txconn.Close()
+			h.txconn = nil
+		}
+	}()
 	if h.txconn == nil {
 		return errors.New("fail Rollback: handler has no transactional connection")
 	}
