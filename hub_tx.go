@@ -21,6 +21,7 @@ func (h *Hub) BeginTx() (*Hub, error) {
 
 	ht := new(Hub)
 	ht.txconn = conn
+	ht._log = h._log
 	return ht, nil
 }
 
@@ -32,8 +33,6 @@ func (h *Hub) Commit() error {
 	if e := h.txconn.Commit(); e != nil {
 		return fmt.Errorf("fail Commit: %s", e.Error())
 	}
-	h.txconn.Close()
-	h.txconn = nil
 	return nil
 }
 
@@ -45,7 +44,12 @@ func (h *Hub) Rollback() error {
 	if e := h.txconn.RollBack(); e != nil {
 		return fmt.Errorf("fail Rollback: %s", e.Error())
 	}
-	h.txconn.RollBack()
-	h.txconn = nil
 	return nil
+}
+
+func (h *Hub) IsTx() bool {
+	if h.txconn != nil {
+		return h.txconn.IsTx()
+	}
+	return false
 }
