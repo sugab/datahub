@@ -403,6 +403,7 @@ func (h *Hub) Count(data orm.DataModel, qp *dbflex.QueryParam) (int, error) {
 	if err = cur.Error(); err != nil {
 		return 0, fmt.Errorf("cursor error. %s", err.Error())
 	}
+	defer cur.Close()
 	return cur.Count(), nil
 }
 
@@ -470,7 +471,7 @@ func (h *Hub) PopulateByParm(tableName string, parm *dbflex.QueryParam, dest int
 
 	cur := conn.Cursor(qry, nil)
 	if err = cur.Error(); err != nil {
-		return fmt.Errorf("error when running cursor for aggregation. %s", err.Error())
+		return fmt.Errorf("error when running cursor for PopulateByParm. %s", err.Error())
 	}
 	defer cur.Close()
 
@@ -489,7 +490,7 @@ func (h *Hub) PopulateSQL(sql string, dest interface{}) error {
 	qry := dbflex.SQL(sql)
 	cur := conn.Cursor(qry, nil)
 	if err = cur.Error(); err != nil {
-		return fmt.Errorf("error when running cursor for populatesql. %s", err.Error())
+		return fmt.Errorf("error when running cursor for PopulateSQL. %s", err.Error())
 	}
 
 	err = cur.Fetchs(dest, 0).Close()
