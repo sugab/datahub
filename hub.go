@@ -420,14 +420,19 @@ func (h *Hub) Execute(cmd dbflex.ICommand, object interface{}) (interface{}, err
 }
 
 // Populate will return all data based on command. Normally used with no-datamodel object
-func (h *Hub) Populate(cmd dbflex.ICommand, result interface{}) (int, error) {
+func (h *Hub) Populate(cmd dbflex.ICommand, result interface{}, objects ...toolkit.M) (int, error) {
 	idx, conn, err := h.getConn()
 	if err != nil {
 		return 0, fmt.Errorf("connection error. %s", err.Error())
 	}
 	defer h.closeConn(idx, conn)
 
-	c := conn.Cursor(cmd, nil)
+	var object toolkit.M = nil
+	if len(objects) > 0 {
+		object = objects[0]
+	}
+
+	c := conn.Cursor(cmd, object)
 	if err = c.Error(); err != nil {
 		return 0, fmt.Errorf("unable to prepare cursor. %s", err.Error())
 	}
